@@ -128,13 +128,14 @@ MonoBehaviour:
   growthThreshold: 0.1
   growthSurplusThreshold: 0.05
   maintanence: 0.005
-  size: 1
-  sizeCeiling: 10
+  height: 1
+  heightCeiling: 10
   lifespan: 0
   lifespanCeiling: 240
+  metabolism: 1
   growthIntervalBase: 2
   consumeInterval: 1
   seedInterval: 10
   isAlive: 1
   deadMaterial: {fileID: 2100000, guid: 50c0e7cb48ce4f7408ccf4bb181b3909, type: 2}
-  Seed: {fileID: 6256896786345016046, guid: 6af4812b27aaea94183c94650ea47f52, type: 3}
+  seed: {fileID: 6256896786345016046, guid: 6af4812b27aaea94183c94650ea47f52, type: 3}

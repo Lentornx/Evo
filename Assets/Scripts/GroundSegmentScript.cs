@@ -10,6 +10,7 @@ public class GroundSegment : MonoBehaviour
     public float replenishmentRate = 1.0f;
     public float replenishmentInterval = 4.0f;
     public float threshold = 1.0f;
+    public float decayMultiplier = 2.0f;
 
     private Renderer rend;
     private Dictionary<Plant, float> extractingPlants = new Dictionary<Plant, float>(); //contains distance from this segment
@@ -39,11 +40,11 @@ public class GroundSegment : MonoBehaviour
     {
         float nutrientsGiven = 0.0f;
         float totalDemand = 0.0f; // how much total every plant wants from this segment
-        float currProximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[plant] / (plant.range * plant.size)));
+        float currProximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[plant] / (plant.range * plant.height)));
 
         foreach (var p in extractingPlants)
         {
-            float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / (p.Key.range * p.Key.size))); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
+            float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / (p.Key.range * p.Key.height))); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
             totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * proximityFactor; 
             //mo¿liwe ¿e tutaj dajemy baseNutrientConsumption, by symulowaæ ¿e s¹ tam korzenie, a nie ile faktycznie pobieraj¹
         }
@@ -90,7 +91,7 @@ public class GroundSegment : MonoBehaviour
     {
         float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z),
                                           new Vector3(p.transform.position.x, 0, p.transform.position.z)); // potencjalnie niewydajnie, mo¿naby zapisaæ na boku bo to sie stanie size razy
-        float proximityFactor = Mathf.Clamp01(1.0f - ( distance / (p.range * p.size)));
-        nutrients = Mathf.Min(maxNutrients, nutrients + (proximityFactor * p.size)/2.0f); //wspó³czynnik rozkladu do sparametryzowania
+        float proximityFactor = Mathf.Clamp01(1.0f - ( distance / (p.range * p.height)));
+        nutrients = Mathf.Min(maxNutrients, nutrients + (proximityFactor * p.height)/ decayMultiplier); //wspó³czynnik rozkladu do sparametryzowania
     }
 }

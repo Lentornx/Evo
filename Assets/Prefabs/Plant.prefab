@@ -128,6 +128,7 @@ MonoBehaviour:
   growthThreshold: 0.1
   growthSurplusThreshold: 0.05
   maintanence: 0.005
+  seedCost: 0.1
   height: 1
   heightCeiling: 10
   lifespan: 0

@@ -11,7 +11,11 @@ public class Plant : MonoBehaviour
     public float growthProgress = 0.0f;  // Tracks progress towards the next growth step
     public float growthThreshold = 0.1f; // how much growth needed to grow PER SIZE
     public float growthSurplusThreshold = 0.05f; // plant will only grow when threshold is exceeded by this value PER SIZE
+    public float seedGrowth = 0;
+    public float seedGrowthRatio = 0.1f; // jak¹ czêœæ seedGrowth dostaje z nutrientów
     public float maintanence = 0.05f; // how much energy is spent PER SIZE per cycle
+    public float seedCost = 0.1f;
+    // maintanence is to be changed into a function dependent on other parameters
 
     public int height = 1;
     public int heightCeiling = 20; // how many times can the plant grow?
@@ -39,15 +43,17 @@ public class Plant : MonoBehaviour
         seedParent = GameObject.Find("Seeds").transform; // zapisuje miejsce w hierarchi obiektow gdzie bedzie dodawal seedy
         ExtractSegments(true);
     }
-    public void SetupVariables(float v1, float v2, int v3, float v4)
+    public void SetupVariables(float v1, float v2, int v3, float v4, float v5, float v6)
     {
         baseNutrientConsumption = v1;
         growthSurplusThreshold = v2;
         heightCeiling = v3;
         metabolism = v4;
+        seedCost = v5;
+        growthProgress = v6;
         growthIntervalBase = metabolism * 2.0f;
         consumeInterval = metabolism;
-        seedInterval = metabolism * 10.0f;
+        seedInterval = metabolism * 30.0f;
         Invoke("ExtractNutrients", consumeInterval);
         Invoke("Grow", growthIntervalBase);
         Invoke("SpawnSeed", seedInterval);
@@ -94,7 +100,8 @@ public class Plant : MonoBehaviour
                     totalNutrientConsumed += segment.ExtractNutrients(this, adjustedNutrientConsumption);
                 }
             }
-            growthProgress += totalNutrientConsumed * growthRate;
+            growthProgress += totalNutrientConsumed * growthRate * (1.0f - seedGrowthRatio);
+            seedGrowth += totalNutrientConsumed * growthRate * seedGrowthRatio;
 
             lifespan++;
             growthProgress -= maintanence * height; // odejmujemy utrzymanie organizmu od progressu
@@ -113,7 +120,7 @@ public class Plant : MonoBehaviour
             // jezeli progress wzrostu jest na odpowiednim poziomie oraz nie osiognieta maksymalnej wielkosci
             {
                 transform.localScale += new Vector3(0.0f, 0.1f, 0.0f);
-                transform.position += new Vector3(0.0f, 0.05f, 0.0f);
+                transform.position += new Vector3(0.01f, 0.1f, 0.01f);
                 // wydluzamy i przesuwamy do gory (czysto estetyczny efekt)
                 growthProgress -= growthThreshold * height; // zmiejszamy progress o ilosc wymagana do wzrostu
                 height++;
@@ -130,33 +137,47 @@ public class Plant : MonoBehaviour
         
         if (isAlive)
         {
-            if (height > heightCeiling / 2)
+            if (lifespan > lifespanCeiling / 10)
             {
                 float newBaseNutrientConsumption = baseNutrientConsumption;
                 float newGrowthSurplusThreshold = growthSurplusThreshold;
                 int newHeightCeiling = heightCeiling;
                 float newMetabolism = metabolism;
-                float mutateRate = 1f;
-                float[] mutate = new float[] { Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f) };
-                if (mutate[0] < mutateRate)
+                float newSeedCost = seedCost;
+                float mutateRate = 1f; // mo¿e do mutowania
+
+                int seedCount = (int)(seedGrowth / seedCost);
+                seedGrowth -= seedCost * seedCount;
+                for (int i = 0; i < seedCount; i++)
                 {
-                    newBaseNutrientConsumption = baseNutrientConsumption * Random.Range(0.9f, 1.1f);
+                    float[] mutate = new float[] { Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f) };
+                    // zapis tablicy do skrócenia bo umrzemy albo bêdziemy po prostu parametryCount razy losowali z range
+                    if (mutate[0] < mutateRate)
+                    {
+                        newBaseNutrientConsumption = baseNutrientConsumption * Random.Range(0.9f, 1.1f);
+                    }
+                    if (mutate[1] < mutateRate)
+                    {
+                        newGrowthSurplusThreshold = growthSurplusThreshold * Random.Range(0.9f, 1.1f);
+                    }
+                    if (mutate[2] < mutateRate)
+                    {
+                        newHeightCeiling = Mathf.RoundToInt(heightCeiling * Random.Range(0.9f, 1.1f));
+                    }
+                    if (mutate[3] < mutateRate)
+                    {
+                        newMetabolism = metabolism * Random.Range(0.9f, 1.1f);
+                    }
+                    if (mutate[4] < mutateRate)
+                    {
+                        newSeedCost = seedCost * Random.Range(0.9f, 1.1f);
+                    }
+                    GameObject newObj = Instantiate(seed, new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity, seedParent); 
+                    // kiedy bêd¹ branche to bêdziemy spawnowaæ ró¿nych liœci
+                    Seed newSeed = newObj.GetComponent<Seed>();
+                    newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost);
                 }
-                if (mutate[1] < mutateRate)
-                {
-                    newGrowthSurplusThreshold = growthSurplusThreshold * Random.Range(0.9f, 1.1f);
-                }
-                if (mutate[2] < mutateRate)
-                {
-                    newHeightCeiling = Mathf.RoundToInt(heightCeiling * Random.Range(0.9f, 1.1f));
-                }
-                if (mutate[3] < mutateRate)
-                {
-                    newMetabolism = metabolism * Random.Range(0.9f, 1.1f);
-                }
-                GameObject newObj = Instantiate(seed, transform.position, Quaternion.identity, seedParent);
-                Seed newSeed = newObj.GetComponent<Seed>();
-                newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism);
+                // stworzyæ funkcjê mutateAndSpawn i pozbyæ siê ca³ego tego fora st¹d 
             }
             Invoke("SpawnSeed", seedInterval);
         }
@@ -191,7 +212,7 @@ public class Plant : MonoBehaviour
             ExtractSegments(false);
             height--;
             transform.position -= new Vector3(0.0f, 0.05f, 0.0f);
-            transform.localScale -= new Vector3(0.0f, 0.1f, 0.0f);
+            transform.localScale -= new Vector3(0.0f, 0.05f, 0.0f);
         }
         else
         {
@@ -199,7 +220,6 @@ public class Plant : MonoBehaviour
         }
         
     }
-
     void OnDrawGizmosSelected() // pokazuje zasieg collidera od korzeni
     {
         Gizmos.color = Color.blue;

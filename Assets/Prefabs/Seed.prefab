@@ -124,7 +124,9 @@ MonoBehaviour:
   baseNutrientConsumption: 2
   growthSurplusThreshold: 0.05
   heightCeiling: 10
-  metabolism: 1
+  metabolism: 0.8
+  seedCost: 0.1
+  startingGrowth: 0.1
 --- !u!54 &4103742753222853345
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -155,9 +155,11 @@ MonoBehaviour:
   groundSegment: {fileID: 4636834487547303165, guid: affe8a1bf430fa149abc0924d589a4d0, type: 3}
   Plant: {fileID: 7805038903151981569, guid: d61d25ef64cd6294b8869ad86b777d8f, type: 3}
   Seed: {fileID: 6256896786345016046, guid: 6af4812b27aaea94183c94650ea47f52, type: 3}
-  rows: 75
-  columns: 75
+  decoy: {fileID: 1930951590502483625, guid: e06fff7cb220d7f418a4d3221964eda4, type: 3}
+  rows: 100
+  columns: 100
   segmentSize: 0.1
+  decoySize: 0.1
 --- !u!4 &49627400
 Transform:
   m_ObjectHideFlags: 0
@@ -372,7 +374,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b20b7c8b9dc0e045af3c65c60169ce3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 10
+  moveSpeed: 8
   rotationSpeed: 4
   minBounds: {x: -10, y: 0, z: -10}
   maxBounds: {x: 10, y: 10, z: 10}
@@ -408,6 +410,7 @@ MonoBehaviour:
   currentWind: {x: 0, y: 0, z: 0}
   targetWind: {x: 0, y: 0, z: 0}
   transitionSpeed: 1
+  targetFrameRate: 60
 --- !u!4 &1628837523
 Transform:
   m_ObjectHideFlags: 0

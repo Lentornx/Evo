@@ -28,6 +28,7 @@ public class Plant : MonoBehaviour
     public float consumeInterval; // idea - metabolism will affect how long this interval is?? a moze to jest nasz metabolism? moze niech on affectuje jak dlugo zyje roslina?
     public float seedInterval;
 
+    public bool dynamicMat = false;
 
     public bool isAlive = true;
     public Material defaultMaterial;
@@ -119,7 +120,8 @@ public class Plant : MonoBehaviour
             growthProgress -= maintanenceTotal; // odejmujemy utrzymanie organizmu od progressu
 
             float progressRatio =  growthProgress / ((growthThreshold + growthSurplusThreshold) * height); 
-            rend.material.color = Color.Lerp(struggleMaterial.color, defaultMaterial.color, progressRatio); 
+            if(dynamicMat)
+                rend.material.color = Color.Lerp(struggleMaterial.color, defaultMaterial.color, progressRatio); 
             // pokazuje jak du¿y ma zapas growth wzglêdem nastêpnego progu wzrostu
 
             if (growthProgress < 0 || lifespan > lifespanCeiling) // deda jak nic mu nie zostaje

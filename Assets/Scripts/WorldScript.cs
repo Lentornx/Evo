@@ -7,9 +7,12 @@ public class WorldScript : MonoBehaviour
     public Vector3 currentWind;
     public Vector3 targetWind;
     public float transitionSpeed = 1f; // Speed of transition
+    public int targetFrameRate = 60;
     void Start()
     {
         InvokeRepeating("WindChange", 0, 10);
+        Application.targetFrameRate = targetFrameRate;
+
     }
 
     void Update()

@@ -11,6 +11,9 @@ public class GroundSegment : MonoBehaviour
     public float replenishmentInterval = 4.0f;
     public float threshold = 1.0f;
     public float decayMultiplier = 2.0f;
+    public bool dynamicMat = false;
+
+    public Material fullMaterial;
 
     private Renderer rend;
     private Dictionary<Plant, float> extractingPlants = new Dictionary<Plant, float>(); //contains distance from this segment
@@ -18,14 +21,13 @@ public class GroundSegment : MonoBehaviour
     void Start()
     {
         rend = GetComponent<Renderer>(); // renderuje nam zmienjacy sie kolor
-        UpdateColor();
         InvokeRepeating("ReplenishNutrients", replenishmentInterval, replenishmentInterval);
     }
 
     public void StartExtracting(Plant plant)
     {
-        float distance = Vector3.Distance(new Vector3(transform.position.x,0,transform.position.z), 
-                                          new Vector3(plant.transform.position.x, 0, plant.transform.position.z)); 
+        float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z),
+                                          new Vector3(plant.transform.position.x, 0, plant.transform.position.z));
         // liczymy dystans od bazy rosliny (gdzie siê zaczynaj¹ korzenie)
         extractingPlants.TryAdd(plant, distance);
     }
@@ -35,8 +37,8 @@ public class GroundSegment : MonoBehaviour
         extractingPlants.Remove(plant);
     }
 
-    public float ExtractNutrients(Plant plant, float amount) 
-        // idea, kazdy segment bedzie wiedzial w ilu procentach jest zakorzeniony wzglêdem kazdej rosliny, a inkrement zakorzenienia bêdzie zale¿a³ od statów i odleg³osci rosliny
+    public float ExtractNutrients(Plant plant, float amount)
+    // idea, kazdy segment bedzie wiedzial w ilu procentach jest zakorzeniony wzglêdem kazdej rosliny, a inkrement zakorzenienia bêdzie zale¿a³ od statów i odleg³osci rosliny
     {
         float nutrientsGiven = 0.0f;
         float totalDemand = 0.0f; // how much total every plant wants from this segment
@@ -45,7 +47,7 @@ public class GroundSegment : MonoBehaviour
         foreach (var p in extractingPlants)
         {
             float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / (p.Key.range * p.Key.height))); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
-            totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * proximityFactor; 
+            totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * proximityFactor;
             //mo¿liwe ¿e tutaj dajemy baseNutrientConsumption, by symulowaæ ¿e s¹ tam korzenie, a nie ile faktycznie pobieraj¹
         }
 
@@ -61,8 +63,9 @@ public class GroundSegment : MonoBehaviour
         }
 
         nutrients -= nutrientsGiven;
-        UpdateColor();
-        
+        if(dynamicMat == true)
+            UpdateColor();
+
         return nutrientsGiven;
     }
 
@@ -74,7 +77,7 @@ public class GroundSegment : MonoBehaviour
     private void UpdateColor()
     {
         float nutrientRatio = nutrients / maxNutrients;
-        rend.material.color = Color.Lerp(Color.black, Color.green, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej szary kolor
+        rend.material.color = Color.Lerp(Color.black, fullMaterial.color, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej szary kolor 
     }
 
     private void ReplenishNutrients()
@@ -84,14 +87,13 @@ public class GroundSegment : MonoBehaviour
         {
             nutrients = maxNutrients;
         }
-        UpdateColor();
     }
 
     public void GetNutrientsFromDecay(Plant p)
     {
         float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z),
                                           new Vector3(p.transform.position.x, 0, p.transform.position.z)); // potencjalnie niewydajnie, mo¿naby zapisaæ na boku bo to sie stanie size razy
-        float proximityFactor = Mathf.Clamp01(1.0f - ( distance / (p.range * p.height)));
-        nutrients = Mathf.Min(maxNutrients, nutrients + (proximityFactor * p.height)/ decayMultiplier); //wspó³czynnik rozkladu do sparametryzowania
+        float proximityFactor = Mathf.Clamp01(1.0f - (distance / (p.range * p.height)));
+        nutrients = Mathf.Min(maxNutrients, nutrients + (proximityFactor * p.height) / decayMultiplier); //wspó³czynnik rozkladu do sparametryzowania
     }
 }

@@ -13,7 +13,7 @@ public class Plant : MonoBehaviour
     public float growthSurplusThreshold = 0.05f; // plant will only grow when threshold is exceeded by this value PER SIZE
     public float seedGrowth = 0;
     public float seedGrowthRatio = 0.1f; // jak¹ czêœæ seedGrowth dostaje z nutrientów
-    public float maintanence = 0.05f; // how much energy is spent PER SIZE per cycle
+    public float maintanenceBase = 0.005f; // how much energy is spent PER SIZE per cycle
     public float seedCost = 0.1f;
     // maintanence is to be changed into a function dependent on other parameters
 
@@ -30,30 +30,38 @@ public class Plant : MonoBehaviour
 
 
     public bool isAlive = true;
+    public Material defaultMaterial;
     public Material deadMaterial;
+    public Material struggleMaterial;
+
+    private Renderer rend;
 
     public GameObject seed;
     private Transform seedParent;
-    private HashSet<GroundSegment> AccessedSegments = new HashSet<GroundSegment>(); 
+    private HashSet<GroundSegment> AccessedSegments = new HashSet<GroundSegment>();
 
     // mo¿liwe ¿e maintanence i range podzielimy na base i increment
 
     void Start()
     {
         seedParent = GameObject.Find("Seeds").transform; // zapisuje miejsce w hierarchi obiektow gdzie bedzie dodawal seedy
-        ExtractSegments(true);
+        rend = GetComponent<Renderer>();
     }
     public void SetupVariables(float v1, float v2, int v3, float v4, float v5, float v6)
     {
+        ExtractSegments(true);
+
         baseNutrientConsumption = v1;
         growthSurplusThreshold = v2;
         heightCeiling = v3;
         metabolism = v4;
         seedCost = v5;
         growthProgress = v6;
+
         growthIntervalBase = metabolism * 2.0f;
         consumeInterval = metabolism;
         seedInterval = metabolism * 30.0f;
+
         Invoke("ExtractNutrients", consumeInterval);
         Invoke("Grow", growthIntervalBase);
         Invoke("SpawnSeed", seedInterval);
@@ -61,7 +69,7 @@ public class Plant : MonoBehaviour
 
     void ExtractSegments(bool add) // parametr mowiacy czy zaczynam extrakcje nowych segmentow czy je odlaczam gdy roslina deda
     {
-        Collider[] hitColliders = Physics.OverlapSphere(new Vector3(transform.position.x, 0.0f, transform.position.z), range * height); 
+        Collider[] hitColliders = Physics.OverlapSphere(new Vector3(transform.position.x, 0.0f, transform.position.z), range * height);
         // kulisty kollider u bazy roœliny do symulowania zasiêgu korzeni
         foreach (var hitCollider in hitColliders)
         {
@@ -70,7 +78,7 @@ public class Plant : MonoBehaviour
             {
                 if (add)
                 {
-                    if(isAlive)
+                    if (isAlive)
                         segment.StartExtracting(this);
                     AccessedSegments.Add(segment);
                 }
@@ -79,12 +87,12 @@ public class Plant : MonoBehaviour
                     if (isAlive)
                         segment.StopExtracting(this);
                     AccessedSegments.Remove(segment);
-                }   
+                }
             }
         }
     }
 
-    void ExtractNutrients() 
+    void ExtractNutrients()
     {
         if (isAlive)
         {
@@ -100,11 +108,20 @@ public class Plant : MonoBehaviour
                     totalNutrientConsumed += segment.ExtractNutrients(this, adjustedNutrientConsumption);
                 }
             }
-            growthProgress += totalNutrientConsumed * growthRate * (1.0f - seedGrowthRatio);
-            seedGrowth += totalNutrientConsumed * growthRate * seedGrowthRatio;
+
+            float growthNetGain = totalNutrientConsumed * growthRate;
+            growthProgress += growthNetGain * (1.0f - seedGrowthRatio);
+            seedGrowth += growthNetGain * seedGrowthRatio;
 
             lifespan++;
-            growthProgress -= maintanence * height; // odejmujemy utrzymanie organizmu od progressu
+            float maintanenceTotal = maintanenceBase * height;
+
+            growthProgress -= maintanenceTotal; // odejmujemy utrzymanie organizmu od progressu
+
+            float progressRatio =  growthProgress / ((growthThreshold + growthSurplusThreshold) * height); 
+            rend.material.color = Color.Lerp(struggleMaterial.color, defaultMaterial.color, progressRatio); 
+            // pokazuje jak du¿y ma zapas growth wzglêdem nastêpnego progu wzrostu
+
             if (growthProgress < 0 || lifespan > lifespanCeiling) // deda jak nic mu nie zostaje
             {
                 turnDead();
@@ -119,8 +136,8 @@ public class Plant : MonoBehaviour
             if ((growthProgress >= (growthThreshold + growthSurplusThreshold) * height) && height < heightCeiling)
             // jezeli progress wzrostu jest na odpowiednim poziomie oraz nie osiognieta maksymalnej wielkosci
             {
-                transform.localScale += new Vector3(0.0f, 0.1f, 0.0f);
-                transform.position += new Vector3(0.01f, 0.1f, 0.01f);
+                transform.localScale += new Vector3(0.01f, 0.1f, 0.01f);
+                transform.position += new Vector3(0.0f, 0.1f, 0.0f);
                 // wydluzamy i przesuwamy do gory (czysto estetyczny efekt)
                 growthProgress -= growthThreshold * height; // zmiejszamy progress o ilosc wymagana do wzrostu
                 height++;
@@ -134,7 +151,7 @@ public class Plant : MonoBehaviour
 
     void SpawnSeed() //powinno zabierac troche progressu, okolo tyle ile seed dostaje na poczatek zycia rosliny
     {
-        
+
         if (isAlive)
         {
             if (lifespan > lifespanCeiling / 10)
@@ -172,7 +189,7 @@ public class Plant : MonoBehaviour
                     {
                         newSeedCost = seedCost * Random.Range(0.9f, 1.1f);
                     }
-                    GameObject newObj = Instantiate(seed, new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity, seedParent); 
+                    GameObject newObj = Instantiate(seed, new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity, seedParent);
                     // kiedy bêd¹ branche to bêdziemy spawnowaæ ró¿nych liœci
                     Seed newSeed = newObj.GetComponent<Seed>();
                     newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost);
@@ -192,15 +209,15 @@ public class Plant : MonoBehaviour
         Renderer renderer = GetComponent<Renderer>(); // zmieniamy material dla czytelnosci
         if (renderer != null)
         {
-            renderer.material = deadMaterial;  
+            renderer.material = deadMaterial;
         }
     }
 
     void Decay()
     {
-        if(height > 0)
+        if (height > 0)
         {
-            Invoke("Decay", growthIntervalBase * (height/2.0f));
+            Invoke("Decay", growthIntervalBase * (height / 2.0f));
             ExtractSegments(true);
             foreach (var segment in AccessedSegments)
             {
@@ -211,14 +228,14 @@ public class Plant : MonoBehaviour
             }
             ExtractSegments(false);
             height--;
-            transform.position -= new Vector3(0.0f, 0.05f, 0.0f);
-            transform.localScale -= new Vector3(0.0f, 0.05f, 0.0f);
+            transform.position -= new Vector3(0.01f, 0.1f, 0.01f);
+            transform.localScale -= new Vector3(0.0f, 0.1f, 0.0f);
         }
         else
         {
             Destroy(gameObject);
         }
-        
+
     }
     void OnDrawGizmosSelected() // pokazuje zasieg collidera od korzeni
     {

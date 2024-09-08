@@ -59,7 +59,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\SpawnerScript.cs" />
-    <Compile Include="Assets\Scripts\GroundSegmentBASIC.cs" />
     <Compile Include="Assets\Scripts\SeedScript.cs" />
     <Compile Include="Assets\Scripts\GroundSegmentScript.cs" />
     <Compile Include="Assets\Scripts\PlantScript.cs" />

@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.EditorTools;
 using UnityEngine;
 
 public class Plant : MonoBehaviour
@@ -39,26 +41,27 @@ public class Plant : MonoBehaviour
     private Renderer rend;
 
     public GameObject seed;
-    private PlantPool plantPool;
+    private static PoolManager poolManager;
+    private static Transform seedParent;
 
-    private Transform seedParent;
     private HashSet<GroundSegment> AccessedSegments = new HashSet<GroundSegment>();
-
     // mo¿liwe ¿e maintanence i range podzielimy na base i increment
-
     void Start()
     {
-        if(plantPool == null)
-            plantPool = FindObjectOfType<PlantPool>();
-        seedParent = GameObject.Find("Seeds").transform; // zapisuje miejsce w hierarchi obiektow gdzie bedzie dodawal seedy
+        if (poolManager == null)
+            poolManager = FindObjectOfType<PoolManager>();
+        if (seedParent == null)
+            seedParent = GameObject.Find("Seeds").transform;
+
         rend = GetComponent<Renderer>();
     }
+
     public void SetupVariables(float v1, float v2, int v3, float v4, float v5, float v6) // resetujemy tu te¿ pewne staty dla object poolingu
     {
-        Renderer renderer = GetComponent<Renderer>(); // nwm czemu musze od nowa brac component, iczanej nie widzi renderera, cos robie nie tak
-        if (renderer != null)
+        if (rend != null)
         {
-            renderer.material = defaultMaterial;
+            rend = GetComponent<Renderer>(); // nwm czemu musze od nowa brac component, iczanej nie widzi renderera, cos robie nie tak
+            rend.material = defaultMaterial;
         } 
         height = 1;
         lifespan = 0;
@@ -77,9 +80,18 @@ public class Plant : MonoBehaviour
         consumeInterval = metabolism;
         seedInterval = metabolism * 30.0f;
 
-        Invoke("ExtractNutrients", consumeInterval);
+        StartCoroutine(ExtractNutrientsCoroutine());
         Invoke("Grow", growthIntervalBase);
         Invoke("SpawnSeed", seedInterval);
+    }
+
+    IEnumerator ExtractNutrientsCoroutine()
+    {
+        while (isAlive)
+        {
+            ExtractNutrients();
+            yield return new WaitForSeconds(consumeInterval);
+        }
     }
 
     void ExtractSegments(bool add) // parametr mowiacy czy zaczynam extrakcje nowych segmentow czy je odlaczam gdy roslina deda
@@ -111,14 +123,12 @@ public class Plant : MonoBehaviour
     {
         if (isAlive)
         {
-            Invoke("ExtractNutrients", consumeInterval);
-
             float totalNutrientConsumed = 0;
             adjustedNutrientConsumption = baseNutrientConsumption * Mathf.Clamp(Mathf.Pow(((growthThreshold + growthSurplusThreshold) * height) / growthProgress, 3), 0.01f, 1.0f);
             // funkcja to spowolnienia pobierania nutrientów gdy roœlina jest przepe³niona
             foreach (var segment in AccessedSegments)
             {
-                if (segment != null && segment.HasNutrients())
+                if (segment.HasNutrients())
                 {
                     totalNutrientConsumed += segment.ExtractNutrients(this, adjustedNutrientConsumption);
                 }
@@ -205,7 +215,7 @@ public class Plant : MonoBehaviour
                     {
                         newSeedCost = seedCost * Random.Range(0.9f, 1.1f);
                     }
-                    GameObject newObj = Instantiate(seed, new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity, seedParent);
+                    GameObject newObj = poolManager.GetSeed(new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity);
                     // kiedy bêd¹ branche to bêdziemy spawnowaæ ró¿nych liœci
                     Seed newSeed = newObj.GetComponent<Seed>();
                     newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost);
@@ -249,7 +259,7 @@ public class Plant : MonoBehaviour
         }
         else
         {
-            plantPool.ReturnPlant(gameObject);
+            poolManager.ReturnPlant(gameObject);
         }
 
     }

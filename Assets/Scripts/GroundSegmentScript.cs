@@ -24,12 +24,12 @@ public class GroundSegment : MonoBehaviour
         InvokeRepeating("ReplenishNutrients", replenishmentInterval, replenishmentInterval);
     }
 
-    public void StartExtracting(Plant plant)
+    public void StartExtracting(Plant p)
     {
-        float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z),
-                                          new Vector3(plant.transform.position.x, 0, plant.transform.position.z));
+        Vector3 plantPositionXZ = new Vector3(p.transform.position.x, 0, p.transform.position.z);
+        float squaredDistance = (transform.position - plantPositionXZ).sqrMagnitude;
         // liczymy dystans od bazy rosliny (gdzie siê zaczynaj¹ korzenie)
-        extractingPlants.TryAdd(plant, distance);
+        extractingPlants.TryAdd(p, squaredDistance);
     }
 
     public void StopExtracting(Plant plant)
@@ -42,11 +42,13 @@ public class GroundSegment : MonoBehaviour
     {
         float nutrientsGiven = 0.0f;
         float totalDemand = 0.0f; // how much total every plant wants from this segment
-        float currProximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[plant] / (plant.range * plant.height)));
+
+        float squaredRange = (plant.range * plant.height) * (plant.range * plant.height);
+        float currProximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[plant] / squaredRange));
 
         foreach (var p in extractingPlants)
         {
-            float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / (p.Key.range * p.Key.height))); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
+            float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / ((p.Key.range * p.Key.height)* (p.Key.range * p.Key.height)) )); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
             totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * proximityFactor;
             //mo¿liwe ¿e tutaj dajemy baseNutrientConsumption, by symulowaæ ¿e s¹ tam korzenie, a nie ile faktycznie pobieraj¹
         }
@@ -91,9 +93,12 @@ public class GroundSegment : MonoBehaviour
 
     public void GetNutrientsFromDecay(Plant p)
     {
-        float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z),
-                                          new Vector3(p.transform.position.x, 0, p.transform.position.z)); // potencjalnie niewydajnie, mo¿naby zapisaæ na boku bo to sie stanie size razy
-        float proximityFactor = Mathf.Clamp01(1.0f - (distance / (p.range * p.height)));
+        Vector3 plantPositionXZ = new Vector3(p.transform.position.x, 0, p.transform.position.z); 
+        float squaredDistance = (transform.position - plantPositionXZ).sqrMagnitude;
+   
+        float squaredRange = (p.range * p.height) * (p.range * p.height);
+
+        float proximityFactor = Mathf.Clamp01(1.0f - (squaredDistance / squaredRange));
         nutrients = Mathf.Min(maxNutrients, nutrients + (proximityFactor * p.height) / decayMultiplier); //wspó³czynnik rozkladu do sparametryzowania
     }
 }

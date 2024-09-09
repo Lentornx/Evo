@@ -59,8 +59,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\SpawnerScript.cs" />
+    <Compile Include="Assets\Scripts\ObjectPool.cs" />
     <Compile Include="Assets\Scripts\SeedScript.cs" />
     <Compile Include="Assets\Scripts\GroundSegmentScript.cs" />
+    <Compile Include="Assets\Scripts\PoolManager.cs" />
     <Compile Include="Assets\Scripts\PlantScript.cs" />
     <Compile Include="Assets\Scripts\PlantPool.cs" />
     <Compile Include="Assets\Scripts\WorldScript.cs" />

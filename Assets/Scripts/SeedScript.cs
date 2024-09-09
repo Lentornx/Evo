@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Seed : MonoBehaviour
 {
-    private WorldScript world;
+    private World world;
     public float movementSpeed = 1.0f; // bedzie sparametryzowane i zale¿ne od genow
     public GameObject plant;
     private bool hasSpawnedPlant = false;
@@ -17,15 +17,18 @@ public class Seed : MonoBehaviour
     public float seedCost = 0.1f;
     public float startingGrowth = 0.1f;
     private Vector3 bias; // po to by nasiona porusza³y siê nieco bardziej losowo
+    public GameObject plantsParent;
+    private PlantPool plantPool;
 
     void Start()
     {
         InvokeRepeating("changeBias", 0, 1.0f);
         if (world == null)
         {
-            world = FindObjectOfType<WorldScript>(); // do pobiierania wartosci wiatru
+            world = FindObjectOfType<World>(); // do pobiierania wartosci wiatru
         }
-    }
+        plantPool = FindObjectOfType<PlantPool>();
+}
 
     void changeBias()
     {
@@ -47,9 +50,8 @@ public class Seed : MonoBehaviour
     {
         if (!hasSpawnedPlant && other.gameObject.GetComponent<GroundSegment>() != null)
         {
-            Transform plantsParent = GameObject.Find("Plants").transform;
             hasSpawnedPlant = true; // w innym przypadku umie zespawnic kilka drzew w jednym miejscu, bo skoliduje z kilkoma fragmentami naraz
-            GameObject newObject = Instantiate(plant, new Vector3(transform.position.x, 0.1f ,transform.position.z), Quaternion.identity, plantsParent);
+            GameObject newObject = plantPool.GetPlant(transform.position, Quaternion.identity);
             Plant newPlant = newObject.GetComponent<Plant>();
             Seed s = gameObject.GetComponent<Seed>();
             newPlant.SetupVariables(s.baseNutrientConsumption, s.growthSurplusThreshold, s.heightCeiling, s.metabolism, seedCost, startingGrowth);

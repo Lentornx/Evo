@@ -29,6 +29,7 @@ public class Plant : MonoBehaviour
     public float seedInterval;
 
     public bool dynamicMat = false;
+    private float initLocalScale = 0.1f;
 
     public bool isAlive = true;
     public Material defaultMaterial;
@@ -38,6 +39,8 @@ public class Plant : MonoBehaviour
     private Renderer rend;
 
     public GameObject seed;
+    private PlantPool plantPool;
+
     private Transform seedParent;
     private HashSet<GroundSegment> AccessedSegments = new HashSet<GroundSegment>();
 
@@ -45,13 +48,24 @@ public class Plant : MonoBehaviour
 
     void Start()
     {
+        if(plantPool == null)
+            plantPool = FindObjectOfType<PlantPool>();
         seedParent = GameObject.Find("Seeds").transform; // zapisuje miejsce w hierarchi obiektow gdzie bedzie dodawal seedy
         rend = GetComponent<Renderer>();
     }
-    public void SetupVariables(float v1, float v2, int v3, float v4, float v5, float v6)
+    public void SetupVariables(float v1, float v2, int v3, float v4, float v5, float v6) // resetujemy tu te¿ pewne staty dla object poolingu
     {
-        ExtractSegments(true);
+        Renderer renderer = GetComponent<Renderer>(); // nwm czemu musze od nowa brac component, iczanej nie widzi renderera, cos robie nie tak
+        if (renderer != null)
+        {
+            renderer.material = defaultMaterial;
+        } 
+        height = 1;
+        lifespan = 0;
+        isAlive = true;
+        transform.localScale = new Vector3(initLocalScale, initLocalScale, initLocalScale);
 
+        ExtractSegments(true);
         baseNutrientConsumption = v1;
         growthSurplusThreshold = v2;
         heightCeiling = v3;
@@ -235,7 +249,7 @@ public class Plant : MonoBehaviour
         }
         else
         {
-            Destroy(gameObject);
+            plantPool.ReturnPlant(gameObject);
         }
 
     }

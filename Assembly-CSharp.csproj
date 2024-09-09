@@ -62,6 +62,7 @@
     <Compile Include="Assets\Scripts\SeedScript.cs" />
     <Compile Include="Assets\Scripts\GroundSegmentScript.cs" />
     <Compile Include="Assets\Scripts\PlantScript.cs" />
+    <Compile Include="Assets\Scripts\PlantPool.cs" />
     <Compile Include="Assets\Scripts\WorldScript.cs" />
     <Compile Include="Assets\Scripts\CameraController.cs" />
   </ItemGroup>

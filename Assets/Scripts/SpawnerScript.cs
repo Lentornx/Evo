@@ -12,23 +12,19 @@ public class Spawner : MonoBehaviour
     public float decoySize = 0.1f;
 
     private GameObject groundParent;
-    private GameObject plantParent;
-    private GameObject SeedParent;
+    public GameObject plantParent;
+    public GameObject SeedParent;
 
     void Start()
     {
         // Create parent objects to organize the hierarchy
         groundParent = new GameObject("GroundSegments");
         groundParent.transform.parent = transform;
-        SeedParent = new GameObject("Seeds");
-        SeedParent.transform.parent = transform;
-        plantParent = new GameObject("Plants");
-        plantParent.transform.parent = transform;
 
         GenerateGround();
         GenerateDecoy();
         GenerateSeed();
-        CombineGroundMeshes(); // Combine ground meshes into one
+        //CombineGroundMeshes(); // Combine ground meshes into one
     }
 
     void GenerateGround()

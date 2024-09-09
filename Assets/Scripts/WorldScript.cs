@@ -2,17 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorldScript : MonoBehaviour
+public class World : MonoBehaviour
 {
     public Vector3 currentWind;
     public Vector3 targetWind;
     public float transitionSpeed = 1f; // Speed of transition
-    public int targetFrameRate = 60;
+    public int targetFrameRate = 120;
+    public bool limitFPS = true;
     void Start()
     {
         InvokeRepeating("WindChange", 0, 10);
-        Application.targetFrameRate = targetFrameRate;
-
+        if (limitFPS)
+            Application.targetFrameRate = targetFrameRate;
     }
 
     void Update()
@@ -27,6 +28,6 @@ public class WorldScript : MonoBehaviour
             -0.2f, // ta wartosc bedzie w przyszlosci zalezna od genow nasionka
             Random.Range(-1f, 1f)   
         );
-        Debug.Log("Wind changed to: " + targetWind);
+        //Debug.Log("Wind changed to: " + targetWind);
     }
 }

@@ -18,7 +18,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &7021636073758743928
 Transform:
@@ -125,20 +125,21 @@ MonoBehaviour:
   baseNutrientConsumption: 2
   adjustedNutrientConsumption: 0
   growthProgress: 0.1
-  growthThreshold: 0.1
-  growthSurplusThreshold: 0.05
   seedGrowth: 0
   seedGrowthRatio: 0.1
   maintanenceBase: 0.005
   seedCost: 0.1
+  finalGrowthThreshold: 0
   height: 1
-  heightCeiling: 10
+  heightCeiling: 20
   lifespan: 0
   lifespanCeiling: 240
+  decayMultplier: 2
   metabolism: 1
   growthIntervalBase: 2
   consumeInterval: 1
   seedInterval: 10
+  dynamicMat: 0
   isAlive: 1
   defaultMaterial: {fileID: 2100000, guid: 5561e717b16dbd4458a137a05cb41bba, type: 2}
   deadMaterial: {fileID: 2100000, guid: 50c0e7cb48ce4f7408ccf4bb181b3909, type: 2}

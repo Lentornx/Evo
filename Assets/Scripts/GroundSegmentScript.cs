@@ -16,7 +16,20 @@ public class GroundSegment : MonoBehaviour
     public Material fullMaterial;
 
     private Renderer rend;
-    private Dictionary<Plant, float> extractingPlants = new Dictionary<Plant, float>(); //contains distance from this segment
+
+    public struct PlantInfo
+    {
+        public float squaredDistance;
+        public float proximityFactor;
+
+        public PlantInfo(float squaredDistance, float proximityFactor)
+        {
+            this.squaredDistance = squaredDistance;
+            this.proximityFactor = proximityFactor;
+        }
+    }
+
+    private Dictionary<Plant, PlantInfo> extractingPlants = new Dictionary<Plant, PlantInfo>(); //contains distance from this segment
 
     void Start()
     {
@@ -26,10 +39,26 @@ public class GroundSegment : MonoBehaviour
 
     public void StartExtracting(Plant p)
     {
-        Vector3 plantPositionXZ = new Vector3(p.transform.position.x, 0, p.transform.position.z);
-        float squaredDistance = (transform.position - plantPositionXZ).sqrMagnitude;
-        // liczymy dystans od bazy rosliny (gdzie siê zaczynaj¹ korzenie)
-        extractingPlants.TryAdd(p, squaredDistance);
+        float proximityFactor;
+        PlantInfo plantInfo;
+        float squaredRange = (p.range * p.height) * (p.range * p.height); //to zawsze sprawdzamy bo ta funkcja odpala siê tylko przy zmianie height
+        // to do - plants powinny miec vara current range i tam co growth zmieniac, zamiast ciagle przemnazac tu i w inyych funkcjach
+        bool isPlantPresent = extractingPlants.ContainsKey(p);
+        if (!isPlantPresent)
+        {
+            Vector3 plantPositionXZ = new Vector3(p.transform.position.x, 0, p.transform.position.z);
+            float squaredDistance = (transform.position - plantPositionXZ).sqrMagnitude;
+            proximityFactor = Mathf.Clamp01(1.0f - (squaredDistance / squaredRange));
+            PlantInfo newInfo = new PlantInfo(squaredDistance, proximityFactor);
+            plantInfo = new PlantInfo(squaredDistance, proximityFactor);
+            extractingPlants.Add(p, plantInfo);
+        }
+        else
+        {
+            proximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[p].squaredDistance / squaredRange));
+            plantInfo = new PlantInfo(extractingPlants[p].squaredDistance, proximityFactor);
+            extractingPlants[p] = plantInfo;
+        }       
     }
 
     public void StopExtracting(Plant plant)
@@ -38,19 +67,17 @@ public class GroundSegment : MonoBehaviour
     }
 
     public float ExtractNutrients(Plant plant, float amount)
-    // idea, kazdy segment bedzie wiedzial w ilu procentach jest zakorzeniony wzglêdem kazdej rosliny, a inkrement zakorzenienia bêdzie zale¿a³ od statów i odleg³osci rosliny
     {
         float nutrientsGiven = 0.0f;
-        float totalDemand = 0.0f; // how much total every plant wants from this segment
+        float totalDemand = 0.0f; // how much in total is wanted from this segment
 
         float squaredRange = (plant.range * plant.height) * (plant.range * plant.height);
-        float currProximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[plant] / squaredRange));
+        float currProximityFactor = extractingPlants[plant].proximityFactor;
 
         foreach (var p in extractingPlants)
         {
-            float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / ((p.Key.range * p.Key.height)* (p.Key.range * p.Key.height)) )); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
-            totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * proximityFactor;
-            //mo¿liwe ¿e tutaj dajemy baseNutrientConsumption, by symulowaæ ¿e s¹ tam korzenie, a nie ile faktycznie pobieraj¹
+            totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * p.Value.proximityFactor;
+            // mo¿liwe ¿e tutaj damy baseNutrientConsumption zamiast adjusted, by symulowaæ ¿e s¹ tam korzenie ograniczaj¹ce pobieranie innych roœlin
         }
 
         // If total demand exceeds a threshold, distribute proportionally based on proximity and extraction speed
@@ -95,7 +122,6 @@ public class GroundSegment : MonoBehaviour
     {
         Vector3 plantPositionXZ = new Vector3(p.transform.position.x, 0, p.transform.position.z); 
         float squaredDistance = (transform.position - plantPositionXZ).sqrMagnitude;
-   
         float squaredRange = (p.range * p.height) * (p.range * p.height);
 
         float proximityFactor = Mathf.Clamp01(1.0f - (squaredDistance / squaredRange));

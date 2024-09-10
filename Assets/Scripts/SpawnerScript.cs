@@ -81,7 +81,7 @@ public class Spawner : MonoBehaviour
 
     void GenerateSeed()
     {
-        Vector3 position = new Vector3(3f, 0.4f, 3f);
+        Vector3 position = new Vector3(rows*segmentSize/2, 0.4f, rows*segmentSize/2);
         Instantiate(Seed, position, Quaternion.identity, SeedParent.transform);
     }
 

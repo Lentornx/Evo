@@ -380,8 +380,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 8
   rotationSpeed: 4
-  minBounds: {x: -10, y: 0, z: -10}
-  maxBounds: {x: 10, y: 10, z: 10}
+  minBounds: {x: -100, y: 0, z: -100}
+  maxBounds: {x: 100, y: 100, z: 100}
 --- !u!1 &1628837521
 GameObject:
   m_ObjectHideFlags: 0

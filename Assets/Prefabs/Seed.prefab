@@ -124,9 +124,10 @@ MonoBehaviour:
   baseNutrientConsumption: 2
   growthSurplusThreshold: 0.05
   heightCeiling: 10
-  metabolism: 0.5
+  metabolism: 1
   seedCost: 0.1
   startingGrowth: 0.1
+  plantsParent: {fileID: 0}
 --- !u!54 &4103742753222853345
 Rigidbody:
   m_ObjectHideFlags: 0

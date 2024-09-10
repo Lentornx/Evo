@@ -11,12 +11,13 @@ public class Plant : MonoBehaviour
     public float adjustedNutrientConsumption;
 
     public float growthProgress = 0.0f;  // Tracks progress towards the next growth step
-    public float growthThreshold = 0.1f; // how much growth needed to grow PER SIZE
-    public float growthSurplusThreshold = 0.05f; // plant will only grow when threshold is exceeded by this value PER SIZE
+    private float growthThreshold = 0.1f; // how much growth needed to grow PER SIZE
+    private float growthSurplusThreshold = 0.05f; // plant will only grow when threshold is exceeded by this value PER SIZE
     public float seedGrowth = 0;
     public float seedGrowthRatio = 0.1f; // jak¹ czêœæ seedGrowth dostaje z nutrientów
     public float maintanenceBase = 0.005f; // how much energy is spent PER SIZE per cycle
     public float seedCost = 0.1f;
+    public float finalGrowthThreshold;
     // maintanence is to be changed into a function dependent on other parameters
 
     public int height = 1;
@@ -67,6 +68,7 @@ public class Plant : MonoBehaviour
         lifespan = 0;
         isAlive = true;
         transform.localScale = new Vector3(initLocalScale, initLocalScale, initLocalScale);
+        CalculateFinalThreshold();
 
         ExtractSegments(true);
         baseNutrientConsumption = v1;
@@ -167,12 +169,18 @@ public class Plant : MonoBehaviour
                 // wydluzamy i przesuwamy do gory (czysto estetyczny efekt)
                 growthProgress -= growthThreshold * height; // zmiejszamy progress o ilosc wymagana do wzrostu
                 height++;
+                CalculateFinalThreshold();
                 ExtractSegments(true); // dodajemy nowe segmenty, bo wraz z size zwieksza sie m.in. zasieg
                 Invoke("Grow", growthIntervalBase * height);
             }
             else //jezeli jest max size to moze juz wgl bez invoke?
                 Invoke("Grow", growthIntervalBase);
         }
+    }
+
+    void CalculateFinalThreshold() 
+    {
+        finalGrowthThreshold = (growthSurplusThreshold + growthThreshold) * height;
     }
 
     void SpawnSeed() //powinno zabierac troche progressu, okolo tyle ile seed dostaje na poczatek zycia rosliny

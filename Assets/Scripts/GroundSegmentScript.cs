@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class GroundSegment : MonoBehaviour
@@ -10,32 +11,51 @@ public class GroundSegment : MonoBehaviour
     public float maxNutrients = 100.0f;
     public float replenishmentRate = 1.0f;
     public float replenishmentInterval = 4.0f;
-    public float threshold = 1.0f;
+    public float threshold = 3.0f;
     public float decayMultiplier = 2.0f;
     public bool dynamicMat = false;
+    public float finalDemand = 0.0f;
+
 
     public Material fullMaterial;
+    private Dictionary<Plant, float> Demand = new Dictionary<Plant, float>();
 
     private Renderer rend;
     void Start()
     {
         rend = GetComponent<Renderer>(); // renderuje nam zmienjacy sie kolor
-        StartCoroutine(ReplenishNutrientsCoroutine());
+        InvokeRepeating("ReplenishNutrients", replenishmentInterval, replenishmentInterval);
     }
 
-    IEnumerator ReplenishNutrientsCoroutine()
+    public void addToExtraction(Plant plant, float consumption)
     {
-        ReplenishNutrients();
-        yield return new WaitForSeconds(replenishmentInterval);
+        Demand.TryAdd(plant, consumption);
+        finalDemand += consumption;
     }
+
+    public void RemoveFromExtraction(Plant plant)
+    {
+        finalDemand -= Demand[plant];
+        Demand.Remove(plant);
+    }
+
     public float ExtractNutrients(Plant plant, float amount)
     {
-        float nutrientsGiven = Mathf.Min(amount, nutrients);
-        nutrients -= nutrientsGiven;
+        finalDemand -= Demand[plant];
+        Demand[plant] = amount;
+        finalDemand += amount;
+
+        if(threshold < finalDemand)
+        {
+            amount = amount / finalDemand * threshold;
+        }
+
+        amount = Mathf.Min(amount, nutrients);
+        nutrients -= amount;
         if(dynamicMat == true)
             UpdateColor();
 
-        return nutrientsGiven;
+        return amount;
     }
 
     public bool HasNutrients()
@@ -46,7 +66,7 @@ public class GroundSegment : MonoBehaviour
     private void UpdateColor()
     {
         float nutrientRatio = nutrients / maxNutrients;
-        rend.material.color = Color.Lerp(Color.black, fullMaterial.color, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej szary kolor 
+        rend.material.color = Color.Lerp(Color.black, fullMaterial.color, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej czarny kolor 
     }
 
     private void ReplenishNutrients()

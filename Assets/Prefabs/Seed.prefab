@@ -123,7 +123,7 @@ MonoBehaviour:
   plant: {fileID: 7805038903151981569, guid: d61d25ef64cd6294b8869ad86b777d8f, type: 3}
   baseNutrientConsumption: 2
   growthSurplusThreshold: 0.05
-  heightCeiling: 10
+  heightCeiling: 20
   metabolism: 1
   seedCost: 0.1
   startingGrowth: 0.1

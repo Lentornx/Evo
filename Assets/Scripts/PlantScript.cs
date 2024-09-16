@@ -100,18 +100,9 @@ public class Plant : MonoBehaviour
         consumeInterval = metabolism;
         seedInterval = metabolism * 30.0f;
 
-        StartCoroutine(ExtractNutrientsCoroutine());
+        Invoke("ExtractNutrients", consumeInterval);
         Invoke("Grow", growthIntervalBase);
         Invoke("SpawnSeed", seedInterval);
-    }
-
-    IEnumerator ExtractNutrientsCoroutine()
-    {
-        while (isAlive)
-        {
-            ExtractNutrients();
-            yield return new WaitForSeconds(consumeInterval);
-        }
     }
 
     void ExtractSegments(bool add) // parametr mowiacy czy zaczynam extrakcje nowych segmentow czy je odlaczam gdy roslina deda
@@ -129,7 +120,10 @@ public class Plant : MonoBehaviour
                 }
                 else //remove
                 {
-                    AccessedSegments.Remove(segment);
+                    if (!isAlive) // because then the plant goes back to the pool 
+                        AccessedSegments.Remove(segment);
+                    else
+                        segment.RemoveFromExtraction(this);
                 }
             }
         }
@@ -151,6 +145,7 @@ public class Plant : MonoBehaviour
             SegmentInfo newInfo = new SegmentInfo(squaredDistance, proximityFactor);
             segmentInfo = new SegmentInfo(squaredDistance, proximityFactor);
             AccessedSegments.Add(segment, segmentInfo);
+            segment.addToExtraction(this, adjustedNutrientConsumption);
         }
         else
         {
@@ -164,9 +159,10 @@ public class Plant : MonoBehaviour
     {
         if (isAlive)
         {
+            Invoke("ExtractNutrients", consumeInterval);
             float totalNutrientConsumed = 0;
-            adjustedNutrientConsumption = baseNutrientConsumption * Mathf.Clamp(Mathf.Pow(((growthThreshold + growthSurplusThreshold) * height) / growthProgress, 3), 0.01f, 1.0f);
-            // funkcja to spowolnienia pobierania nutrientów gdy roœlina jest przepe³niona
+            CalculateConsumption();
+
             foreach (var segment in AccessedSegments)
             {
                 if (segment.Key.HasNutrients())
@@ -194,6 +190,11 @@ public class Plant : MonoBehaviour
                 turnDead();
             }
         }
+    }
+
+    private void CalculateConsumption()  // funkcja to spowolnienia pobierania nutrientów gdy roœlina jest przepe³niona
+    {
+        adjustedNutrientConsumption = baseNutrientConsumption * Mathf.Clamp(Mathf.Pow(((growthThreshold + growthSurplusThreshold) * height) / growthProgress, 2), 0.1f, 1.0f);
     }
 
     void Grow()
@@ -225,7 +226,6 @@ public class Plant : MonoBehaviour
 
     void SpawnSeed() //powinno zabierac troche progressu, okolo tyle ile seed dostaje na poczatek zycia rosliny
     {
-
         if (isAlive)
         {
             if (lifespan > lifespanCeiling / 10)
@@ -277,17 +277,17 @@ public class Plant : MonoBehaviour
     void turnDead() // zamienia siê w martw¹ roœlinê tera :OO
     {
         deathTimer = height;
+        ExtractSegments(false);
         isAlive = false;
         Invoke("Decay", growthIntervalBase * (height));
-
-        Renderer renderer = GetComponent<Renderer>(); // zmieniamy material dla czytelnosci
-        if (renderer != null)
+        // zmieniamy material dla czytelnosci
+        if (rend != null)
         {
-            renderer.material = deadMaterial;
+            rend.material = deadMaterial;
         }
     }
 
-    void Decay() // also move the computations from GetNutrientsFromDecay
+    void Decay() 
     {
         deathTimer--;
         if (deathTimer > 0)
@@ -306,8 +306,8 @@ public class Plant : MonoBehaviour
             ExtractSegments(false);
             poolManager.ReturnPlant(gameObject);
         }
-
     }
+
     void OnDrawGizmosSelected() // pokazuje zasieg collidera od korzeni
     {
         Gizmos.color = Color.blue;

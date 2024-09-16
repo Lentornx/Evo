@@ -156,8 +156,8 @@ MonoBehaviour:
   Plant: {fileID: 7805038903151981569, guid: d61d25ef64cd6294b8869ad86b777d8f, type: 3}
   Seed: {fileID: 6256896786345016046, guid: 6af4812b27aaea94183c94650ea47f52, type: 3}
   decoy: {fileID: 1930951590502483625, guid: e06fff7cb220d7f418a4d3221964eda4, type: 3}
-  rows: 500
-  columns: 500
+  rows: 250
+  columns: 250
   segmentSize: 0.1
   decoySize: 0.1
   plantParent: {fileID: 1896240832}

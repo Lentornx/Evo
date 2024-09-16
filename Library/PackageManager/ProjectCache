@@ -5,7 +5,7 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638575945675364728
+      ticks: 638621149522690111
     m_Hash: 721017021
   m_LockFileStatus:
     m_FilePath: C:/Users/kamil/OneDrive/Pulpit/work_stuff/Evo/Packages/packages-lock.json
@@ -13,8 +13,8 @@ m_ProjectFiles:
     m_ContentTrackingEnabled: 1
     m_ModificationDate:
       serializedVersion: 2
-      ticks: 638575946104692808
-    m_Hash: 2311458558
+      ticks: 638621149537215524
+    m_Hash: 1108948663
 m_EmbeddedPackageManifests:
   m_ManifestsStatus: {}
 m_LocalPackages:

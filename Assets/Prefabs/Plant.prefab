@@ -129,6 +129,7 @@ MonoBehaviour:
   seedGrowthRatio: 0.1
   maintanenceBase: 0.005
   seedCost: 0.1
+  seedEfficiency: 0.2
   finalGrowthThreshold: 0
   height: 1
   heightCeiling: 20
@@ -136,7 +137,7 @@ MonoBehaviour:
   lifespanCeiling: 240
   decayMultplier: 2
   metabolism: 1
-  growthIntervalBase: 2
+  growthInterval: 2
   consumeInterval: 1
   seedInterval: 10
   dynamicMat: 0

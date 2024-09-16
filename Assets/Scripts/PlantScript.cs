@@ -31,7 +31,7 @@ public class Plant : MonoBehaviour
 
     public float decayMultplier = 2.0f;
     public float metabolism = 1.0f;
-    public float growthIntervalBase;  // PER SIZE ile musi poczekac po poprzednim zwiekszeniu size
+    public float growthInterval;  // PER SIZE ile musi poczekac po poprzednim zwiekszeniu size
     public float consumeInterval; // idea - metabolism will affect how long this interval is?? a moze to jest nasz metabolism? moze niech on affectuje jak dlugo zyje roslina?
     public float seedInterval;
 
@@ -96,12 +96,12 @@ public class Plant : MonoBehaviour
         seedCost = v5;
         growthProgress = v6;
 
-        growthIntervalBase = metabolism * 2.0f;
+        growthInterval = metabolism * 2.0f;
         consumeInterval = metabolism;
-        seedInterval = metabolism * 30.0f;
+        seedInterval = metabolism * 60.0f;
 
         Invoke("ExtractNutrients", consumeInterval);
-        Invoke("Grow", growthIntervalBase);
+        Invoke("Grow", growthInterval);
         Invoke("SpawnSeed", seedInterval);
     }
 
@@ -145,7 +145,7 @@ public class Plant : MonoBehaviour
             SegmentInfo newInfo = new SegmentInfo(squaredDistance, proximityFactor);
             segmentInfo = new SegmentInfo(squaredDistance, proximityFactor);
             AccessedSegments.Add(segment, segmentInfo);
-            segment.addToExtraction(this, adjustedNutrientConsumption);
+            segment.addToExtraction(this, adjustedNutrientConsumption / consumeInterval);
         }
         else
         {
@@ -167,7 +167,7 @@ public class Plant : MonoBehaviour
             {
                 if (segment.Key.HasNutrients())
                 {
-                    totalNutrientConsumed += segment.Key.ExtractNutrients(this, adjustedNutrientConsumption * segment.Value.proximityFactor);
+                    totalNutrientConsumed += segment.Key.ExtractNutrients(this, adjustedNutrientConsumption * segment.Value.proximityFactor, consumeInterval);
                 }
             }
 
@@ -212,10 +212,10 @@ public class Plant : MonoBehaviour
                 finalRange = height * range;
                 CalculateFinalThreshold();
                 ExtractSegments(true); // dodajemy nowe segmenty, bo wraz z size zwieksza sie m.in. zasieg
-                Invoke("Grow", growthIntervalBase * height);
+                Invoke("Grow", growthInterval * height);
             }
             else //jezeli jest max size to moze juz wgl bez invoke?
-                Invoke("Grow", growthIntervalBase);
+                Invoke("Grow", growthInterval);
         }
     }
 
@@ -228,48 +228,47 @@ public class Plant : MonoBehaviour
     {
         if (isAlive)
         {
-            if (lifespan > lifespanCeiling / 10)
-            {
-                float newBaseNutrientConsumption = baseNutrientConsumption;
-                float newGrowthSurplusThreshold = growthSurplusThreshold;
-                int newHeightCeiling = heightCeiling;
-                float newMetabolism = metabolism;
-                float newSeedCost = seedCost;
-                float mutateRate = 1f; // mo¿e do mutowania
 
-                int seedCount = (int)(seedGrowth / seedCost);
-                seedGrowth -= seedCost * seedCount;
-                for (int i = 0; i < seedCount; i++)
+            float newBaseNutrientConsumption = baseNutrientConsumption;
+            float newGrowthSurplusThreshold = growthSurplusThreshold;
+            int newHeightCeiling = heightCeiling;
+            float newMetabolism = metabolism;
+            float newSeedCost = seedCost;
+            float mutateRate = 1f; // mo¿e do mutowania
+
+            int seedCount = (int)(seedGrowth / seedCost);
+            seedGrowth -= seedCost * seedCount;
+            for (int i = 0; i < seedCount; i++)
+            {
+                float[] mutate = new float[] { Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f) };
+                // zapis tablicy do skrócenia bo umrzemy albo bêdziemy po prostu parametryCount razy losowali z range
+                if (mutate[0] < mutateRate)
                 {
-                    float[] mutate = new float[] { Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f) };
-                    // zapis tablicy do skrócenia bo umrzemy albo bêdziemy po prostu parametryCount razy losowali z range
-                    if (mutate[0] < mutateRate)
-                    {
-                        newBaseNutrientConsumption = baseNutrientConsumption * Random.Range(0.9f, 1.1f);
-                    }
-                    if (mutate[1] < mutateRate)
-                    {
-                        newGrowthSurplusThreshold = growthSurplusThreshold * Random.Range(0.9f, 1.1f);
-                    }
-                    if (mutate[2] < mutateRate)
-                    {
-                        newHeightCeiling = Mathf.RoundToInt(heightCeiling * Random.Range(0.9f, 1.1f));
-                    }
-                    if (mutate[3] < mutateRate)
-                    {
-                        newMetabolism = metabolism * Random.Range(0.9f, 1.1f);
-                    }
-                    if (mutate[4] < mutateRate)
-                    {
-                        newSeedCost = seedCost * Random.Range(0.9f, 1.1f);
-                    }
-                    GameObject newObj = poolManager.GetSeed(new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity);
-                    // kiedy bêd¹ branche to bêdziemy spawnowaæ ró¿nych liœci
-                    Seed newSeed = newObj.GetComponent<Seed>();
-                    newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost * seedEfficiency);
+                    newBaseNutrientConsumption = baseNutrientConsumption * Random.Range(0.9f, 1.1f);
                 }
-                // stworzyæ funkcjê mutateAndSpawn i pozbyæ siê ca³ego tego fora st¹d 
+                if (mutate[1] < mutateRate)
+                {
+                    newGrowthSurplusThreshold = growthSurplusThreshold * Random.Range(0.9f, 1.1f);
+                }
+                if (mutate[2] < mutateRate)
+                {
+                    newHeightCeiling = Mathf.RoundToInt(heightCeiling * Random.Range(0.9f, 1.1f));
+                }
+                if (mutate[3] < mutateRate)
+                {
+                    newMetabolism = metabolism * Random.Range(0.9f, 1.1f);
+                }
+                if (mutate[4] < mutateRate)
+                {
+                    newSeedCost = seedCost * Random.Range(0.9f, 1.1f);
+                }
+                GameObject newObj = poolManager.GetSeed(new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity);
+                // kiedy bêd¹ branche to bêdziemy spawnowaæ z ró¿nych liœci
+                Seed newSeed = newObj.GetComponent<Seed>();
+                newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost * seedEfficiency);
             }
+            // stworzyæ funkcjê mutateAndSpawn i pozbyæ siê ca³ego tego fora st¹d 
+
             Invoke("SpawnSeed", seedInterval);
         }
     }
@@ -279,7 +278,7 @@ public class Plant : MonoBehaviour
         deathTimer = height;
         ExtractSegments(false);
         isAlive = false;
-        Invoke("Decay", growthIntervalBase * (height));
+        Invoke("Decay", growthInterval * (height));
         // zmieniamy material dla czytelnosci
         if (rend != null)
         {
@@ -292,7 +291,7 @@ public class Plant : MonoBehaviour
         deathTimer--;
         if (deathTimer > 0)
         {
-            Invoke("Decay", growthIntervalBase * deathTimer);
+            Invoke("Decay", growthInterval * deathTimer);
             foreach (var segment in AccessedSegments)
             {
                 float amount = deathTimer * segment.Value.proximityFactor * decayMultplier; 

@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Seed : MonoBehaviour
 {
-    private static World world;
     public float movementSpeed = 1.0f; // bedzie sparametryzowane i zale¿ne od genow
     public GameObject plant;
     private bool hasSpawnedPlant = false;
@@ -18,6 +17,8 @@ public class Seed : MonoBehaviour
     public float startingGrowth = 0.1f;
     private Vector3 bias; // po to by nasiona porusza³y siê nieco bardziej losowo
     public GameObject plantsParent;
+
+    private static World world;
     private static PoolManager poolManager; // Reference to the PoolManager
 
     void Start()
@@ -26,11 +27,21 @@ public class Seed : MonoBehaviour
             world = FindObjectOfType<World>();
         if (poolManager == null)
             poolManager = FindObjectOfType<PoolManager>(); // Find the PoolManager in the scene
+        InvokeRepeating("ChangeBias", 0.0f, 1.0f);
+    }
+
+    void ChangeBias()
+    {
+        bias = new Vector3(
+            Random.Range(-0.1f, 0.1f),
+            0,
+            Random.Range(-0.1f, 0.1f)
+        );
     }
 
     void Update()
     {
-        transform.position += world.currentWind * movementSpeed * Time.deltaTime;
+        transform.position += (world.currentWind + bias) * movementSpeed * Time.deltaTime;
         if (transform.position.y < -1) // Failsafe in case the seed falls out of bounds
         {
             poolManager.ReturnSeed(gameObject); // Return seed to pool if it falls
@@ -59,5 +70,4 @@ public class Seed : MonoBehaviour
         seedCost = v5;
         startingGrowth = v6;
     }
-
 }

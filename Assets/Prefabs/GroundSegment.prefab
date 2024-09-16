@@ -18,7 +18,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &443671421674727347
 Transform:
@@ -121,9 +121,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nutrients: 100
   maxNutrients: 100
-  replenishmentRate: 10
-  replenishmentInterval: 20
+  replenishmentRate: 5
   threshold: 1
   decayMultiplier: 2
-  dynamicMat: 0
+  finalDemand: 0
   fullMaterial: {fileID: 2100000, guid: d3461a578e8867442bad15c9f0a887bb, type: 2}
+  dynamicMat: 0

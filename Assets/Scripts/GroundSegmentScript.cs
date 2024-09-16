@@ -10,21 +10,19 @@ public class GroundSegment : MonoBehaviour
     public float nutrients = 100.0f;
     public float maxNutrients = 100.0f;
     public float replenishmentRate = 1.0f;
-    public float replenishmentInterval = 4.0f;
     public float threshold = 3.0f;
     public float decayMultiplier = 2.0f;
-    public bool dynamicMat = false;
     public float finalDemand = 0.0f;
 
-
-    public Material fullMaterial;
     private Dictionary<Plant, float> Demand = new Dictionary<Plant, float>();
 
+    public Material fullMaterial;
     private Renderer rend;
+    public bool dynamicMat = false;
+
     void Start()
     {
         rend = GetComponent<Renderer>(); // renderuje nam zmienjacy sie kolor
-        InvokeRepeating("ReplenishNutrients", replenishmentInterval, replenishmentInterval);
     }
 
     public void addToExtraction(Plant plant, float consumption)
@@ -39,15 +37,16 @@ public class GroundSegment : MonoBehaviour
         Demand.Remove(plant);
     }
 
-    public float ExtractNutrients(Plant plant, float amount)
+    public float ExtractNutrients(Plant plant, float amount, float interval)
     {
+        float currentDemand = amount / interval;
         finalDemand -= Demand[plant];
-        Demand[plant] = amount;
-        finalDemand += amount;
+        Demand[plant] = currentDemand;
+        finalDemand += currentDemand;
 
         if(threshold < finalDemand)
         {
-            amount = amount / finalDemand * threshold;
+            amount = currentDemand / finalDemand * threshold;
         }
 
         amount = Mathf.Min(amount, nutrients);
@@ -69,7 +68,7 @@ public class GroundSegment : MonoBehaviour
         rend.material.color = Color.Lerp(Color.black, fullMaterial.color, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej czarny kolor 
     }
 
-    private void ReplenishNutrients()
+    public void ReplenishNutrients()
     {
         nutrients += replenishmentRate;
         if (nutrients > maxNutrients)

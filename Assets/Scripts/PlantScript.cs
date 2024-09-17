@@ -51,6 +51,7 @@ public class Plant : MonoBehaviour
     private static Transform seedParent;
 
     private Dictionary<GroundSegment, SegmentInfo> AccessedSegments = new Dictionary<GroundSegment, SegmentInfo>(); //contains distance from this segment
+    private static Collider[] hitColliders; //cached, STATIC WILL ONLY WORK IF GROW WILL REMAIN ON MAIN THREAD
 
     public struct SegmentInfo
     {
@@ -66,11 +67,13 @@ public class Plant : MonoBehaviour
     // mo¿liwe ¿e maintanence i range podzielimy na base i increment
     void Start()
     {
+        if (hitColliders == null)
+            hitColliders = new Collider[50000]; // expected number
         if (poolManager == null)
             poolManager = FindObjectOfType<PoolManager>();
         if (seedParent == null)
             seedParent = GameObject.Find("Seeds").transform;
-        if(rend == null)
+        if (rend == null)
             rend = GetComponent<Renderer>();
     }
 
@@ -78,7 +81,7 @@ public class Plant : MonoBehaviour
     {
         if (rend != null)
         {
-            rend = GetComponent<Renderer>(); // nwm czemu musze od nowa brac component, iczanej nie widzi renderera, cos robie nie tak
+            rend = GetComponent<Renderer>(); 
             rend.material = defaultMaterial;
         } 
         height = 1;
@@ -88,7 +91,7 @@ public class Plant : MonoBehaviour
         transform.localScale = new Vector3(initLocalScale, initLocalScale, initLocalScale);
         CalculateFinalThreshold();
 
-        ExtractSegments(true);
+        
         baseNutrientConsumption = v1;
         growthSurplusThreshold = v2;
         heightCeiling = v3;
@@ -99,35 +102,45 @@ public class Plant : MonoBehaviour
         growthInterval = metabolism * 2.0f;
         consumeInterval = metabolism;
         seedInterval = metabolism * 60.0f;
+        Invoke("StartMetabolism", 1.0f);
+    }
 
+    public void StartMetabolism() 
+    {
+        ExtractSegments(true);
         Invoke("ExtractNutrients", consumeInterval);
         Invoke("Grow", growthInterval);
         Invoke("SpawnSeed", seedInterval);
     }
 
-    void ExtractSegments(bool add) // parametr mowiacy czy zaczynam extrakcje nowych segmentow czy je odlaczam gdy roslina deda
+    void ExtractSegments(bool add)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(new Vector3(transform.position.x, 0.0f, transform.position.z), finalRange);
-        // kulisty kollider u bazy roœliny do symulowania zasiêgu korzeni
-        foreach (var hitCollider in hitColliders)
+        GroundSegment segment;
+        Collider collider;
+        int numColliders = Physics.OverlapSphereNonAlloc(new Vector3(transform.position.x, 0.0f, transform.position.z), finalRange, hitColliders);
+        // Debug.Log("Number of colliders found: " + numColliders);
+        for (int i = 0; i < numColliders; i++)
         {
-            GroundSegment segment = hitCollider.GetComponent<GroundSegment>();
+            collider = hitColliders[i];
+            segment = collider.GetComponent<GroundSegment>();
             if (segment != null)
             {
                 if (add)
                 {
                     StartExtracting(segment);
                 }
-                else //remove
+                else
                 {
-                    if (!isAlive) // because then the plant goes back to the pool 
+                    if (!isAlive)
                         AccessedSegments.Remove(segment);
                     else
                         segment.RemoveFromExtraction(this);
                 }
             }
+
         }
     }
+
 
     public void StartExtracting(GroundSegment segment) // raczej wrócimy do dok³adniejszych dystansów z Vector3.distance
     {
@@ -136,7 +149,7 @@ public class Plant : MonoBehaviour
         float squaredRange = (finalRange) * (finalRange); //to zawsze ustawiamy na nowo bo ta funkcja odpala siê tylko przy zmianie finalRange
         bool isSegmentPresent = AccessedSegments.ContainsKey(segment);
 
-        if (!isSegmentPresent)
+        if (!isSegmentPresent) // distance has to be calculated
         {
             Vector3 SegmentPositionXZ = new Vector3(segment.transform.position.x, 0, segment.transform.position.z);
             float squaredDistance = (transform.position - SegmentPositionXZ).sqrMagnitude;
@@ -147,7 +160,7 @@ public class Plant : MonoBehaviour
             AccessedSegments.Add(segment, segmentInfo);
             segment.addToExtraction(this, adjustedNutrientConsumption / consumeInterval);
         }
-        else
+        else // distance already cached
         {
             proximityFactor = Mathf.Clamp01(1.0f - (AccessedSegments[segment].squaredDistance / squaredRange));
             segmentInfo = new SegmentInfo(AccessedSegments[segment].squaredDistance, proximityFactor);
@@ -194,7 +207,7 @@ public class Plant : MonoBehaviour
 
     private void CalculateConsumption()  // funkcja to spowolnienia pobierania nutrientów gdy roœlina jest przepe³niona
     {
-        adjustedNutrientConsumption = baseNutrientConsumption * Mathf.Clamp(Mathf.Pow(((growthThreshold + growthSurplusThreshold) * height) / growthProgress, 2), 0.1f, 1.0f);
+        adjustedNutrientConsumption = baseNutrientConsumption * Mathf.Clamp(Mathf.Pow(((growthThreshold + growthSurplusThreshold) * height) / growthProgress, 3), 0.001f, 1.0f);
     }
 
     void Grow()

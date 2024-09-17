@@ -8,6 +8,7 @@ public class Spawner : MonoBehaviour
     public GameObject decoy;
     public int rows = 50;
     public int columns = 50;
+    public int depth = 10;
     public float segmentSize = 0.1f;
     public float decoySize = 0.1f;
 
@@ -29,8 +30,11 @@ public class Spawner : MonoBehaviour
         {
             for (int z = 0; z < rows; z++)
             {
-                Vector3 position = new Vector3(x * segmentSize, 0, z * segmentSize);
-                Instantiate(groundSegment, position, Quaternion.identity, groundParent.transform);
+                for (int y = 0; y < depth; y++)
+                {
+                    Vector3 position = new Vector3(x * segmentSize, y * (-segmentSize), z * segmentSize);
+                    Instantiate(groundSegment, position, Quaternion.identity, groundParent.transform);
+                }
             }
         }
     }

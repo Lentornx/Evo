@@ -8,37 +8,37 @@ public class Plant : MonoBehaviour
 {
     public float range = 0.15f; // range of roots PER SIZE 
     private float finalRange;
-    public float growthRate = 0.5f;  // How much the plant grows per unit of nutrient extracted
+    private float growthRate = 1f;  // How much the plant grows per unit of nutrient extracted
     public float baseNutrientConsumption = 1.0f; // max nutrient extracted from one tile
     public float adjustedNutrientConsumption;
 
-    public float growthProgress = 0.0f;  // Tracks progress towards the next growth step
+    public float growthProgress;  // Tracks progress towards the next growth step
+    public float finalGrowthThreshold;
     private float growthThreshold = 100f; // how much growth needed to grow PER SIZE
     private float growthSurplusThreshold = 50f; // plant will only grow when threshold is exceeded by this value PER SIZE
     public float seedGrowth = 0;
-    public float seedGrowthRatio = 0.1f; // jak¹ czêœæ seedGrowth dostaje z nutrientów
-    public float maintanenceBase = 0.005f; // how much energy is spent PER SIZE per cycle
-    public float seedCost = 0.1f;
-    public float seedEfficiency = 0.2f; // ratio zu¿ytego progressu do tego co powstanie w nowym nasionku
-    public float finalGrowthThreshold;
+    private float seedGrowthRatio = 0.1f; // jak¹ czêœæ seedGrowth dostaje z nutrientów
+    private float maintanenceBase = 5f; // how much energy is spent PER SIZE per cycle
+    public float seedCost = 160f;
+    private float seedEfficiency = 0.2f; // ratio zu¿ytego progressu do tego co powstanie w nowym nasionku
     // maintanence is to be changed into a function dependent on other parameters
 
     public int height = 1;
     public int heightCeiling = 20; // how many times can the plant grow?
 
     public int lifespan = 0; // rosniie co consume interval
-    public int lifespanCeiling = 240;
+    private int lifespanCeiling = 240;
 
-    public float decayMultplier = 2.0f;
+    private float decayMultplier = 2.0f;
     public float metabolism = 1.0f;
-    public float growthInterval;  // PER SIZE ile musi poczekac po poprzednim zwiekszeniu size
-    public float consumeInterval; // idea - metabolism will affect how long this interval is?? a moze to jest nasz metabolism? moze niech on affectuje jak dlugo zyje roslina?
-    public float seedInterval;
+    private float growthInterval;  // PER SIZE ile musi poczekac po poprzednim zwiekszeniu size
+    private float consumeInterval; // idea - metabolism will affect how long this interval is?? a moze to jest nasz metabolism? moze niech on affectuje jak dlugo zyje roslina?
+    private float seedInterval;
 
     public bool dynamicMat = false;
     private float initLocalScale = 0.1f;
 
-    public bool isAlive = true;
+    private bool isAlive = true;
     private int deathTimer; // uzywany kiedy dednie drzewo 
     public Material defaultMaterial;
     public Material deadMaterial;
@@ -50,8 +50,8 @@ public class Plant : MonoBehaviour
     private static PoolManager poolManager;
     private static Transform seedParent;
 
-    private Dictionary<GroundSegment, SegmentInfo> AccessedSegments = new Dictionary<GroundSegment, SegmentInfo>(); //contains distance from this segment
-    private static Collider[] hitColliders; //cached, STATIC WILL ONLY WORK IF GROW WILL REMAIN ON MAIN THREAD
+    private Dictionary<GroundSegment, SegmentInfo> AccessedSegments = new(); //contains distance from a given segment
+    private static Collider[] hitColliders; //cached, STATIC WILL ONLY WORK IF GROW REMAINS ON THE MAIN THREAD
 
     public struct SegmentInfo
     {
@@ -68,7 +68,7 @@ public class Plant : MonoBehaviour
     void Start()
     {
         if (hitColliders == null)
-            hitColliders = new Collider[50000]; // expected number
+            hitColliders = new Collider[50000]; 
         if (poolManager == null)
             poolManager = FindObjectOfType<PoolManager>();
         if (seedParent == null)
@@ -91,7 +91,6 @@ public class Plant : MonoBehaviour
         transform.localScale = new Vector3(initLocalScale, initLocalScale, initLocalScale);
         CalculateFinalThreshold();
 
-        
         baseNutrientConsumption = v1;
         growthSurplusThreshold = v2;
         heightCeiling = v3;
@@ -102,28 +101,26 @@ public class Plant : MonoBehaviour
         growthInterval = metabolism * 2.0f;
         consumeInterval = metabolism;
         seedInterval = metabolism * 60.0f;
-        Invoke("StartMetabolism", 1.0f);
+        Invoke(nameof(StartMetabolism), 1.0f);
     }
 
     public void StartMetabolism() 
     {
         ExtractSegments(true);
-        Invoke("ExtractNutrients", consumeInterval);
-        Invoke("Grow", growthInterval);
-        Invoke("SpawnSeed", seedInterval);
+        Invoke(nameof(ExtractNutrients), consumeInterval);
+        Invoke(nameof(Grow), growthInterval);
+        Invoke(nameof(SpawnSeed), seedInterval);
     }
 
     void ExtractSegments(bool add)
     {
-        GroundSegment segment;
         Collider collider;
         int numColliders = Physics.OverlapSphereNonAlloc(new Vector3(transform.position.x, 0.0f, transform.position.z), finalRange, hitColliders);
         // Debug.Log("Number of colliders found: " + numColliders);
         for (int i = 0; i < numColliders; i++)
         {
             collider = hitColliders[i];
-            segment = collider.GetComponent<GroundSegment>();
-            if (segment != null)
+            if (collider.TryGetComponent(out GroundSegment segment))
             {
                 if (add)
                 {
@@ -137,7 +134,6 @@ public class Plant : MonoBehaviour
                         segment.RemoveFromExtraction(this);
                 }
             }
-
         }
     }
 
@@ -151,16 +147,15 @@ public class Plant : MonoBehaviour
 
         if (!isSegmentPresent) // distance has to be calculated
         {
-            Vector3 SegmentPositionXZ = new Vector3(segment.transform.position.x, 0, segment.transform.position.z);
+            Vector3 SegmentPositionXZ = new(segment.transform.position.x, 0, segment.transform.position.z);
             float squaredDistance = (transform.position - SegmentPositionXZ).sqrMagnitude;
 
             proximityFactor = Mathf.Clamp01(1.0f - (squaredDistance / squaredRange));
-            SegmentInfo newInfo = new SegmentInfo(squaredDistance, proximityFactor);
             segmentInfo = new SegmentInfo(squaredDistance, proximityFactor);
             AccessedSegments.Add(segment, segmentInfo);
             segment.addToExtraction(this, adjustedNutrientConsumption / consumeInterval);
         }
-        else // distance already cached
+        else // distance is already cached
         {
             proximityFactor = Mathf.Clamp01(1.0f - (AccessedSegments[segment].squaredDistance / squaredRange));
             segmentInfo = new SegmentInfo(AccessedSegments[segment].squaredDistance, proximityFactor);
@@ -172,7 +167,7 @@ public class Plant : MonoBehaviour
     {
         if (isAlive)
         {
-            Invoke("ExtractNutrients", consumeInterval);
+            Invoke(nameof(ExtractNutrients), consumeInterval);
             float totalNutrientConsumed = 0;
             CalculateConsumption();
 
@@ -200,7 +195,7 @@ public class Plant : MonoBehaviour
 
             if (growthProgress < 0 || lifespan > lifespanCeiling) // deda jak nic mu nie zostaje
             {
-                turnDead();
+                TurnDead();
             }
         }
     }
@@ -225,10 +220,10 @@ public class Plant : MonoBehaviour
                 finalRange = height * range;
                 CalculateFinalThreshold();
                 ExtractSegments(true); // dodajemy nowe segmenty, bo wraz z size zwieksza sie m.in. zasieg
-                Invoke("Grow", growthInterval * height);
+                Invoke(nameof(Grow), growthInterval * height);
             }
             else //jezeli jest max size to moze juz wgl bez invoke?
-                Invoke("Grow", growthInterval);
+                Invoke(nameof(Grow), growthInterval);
         }
     }
 
@@ -250,11 +245,9 @@ public class Plant : MonoBehaviour
 
             int seedCount = (int)(seedGrowth / seedCost);
             seedGrowth -= seedCost * seedCount;
-            Debug.Log(growthProgress);
+
             int seedCountFromGrowthOverflow = (int)((growthProgress - finalGrowthThreshold) / seedCost);
             growthProgress -= seedCountFromGrowthOverflow * seedCost;
-            Debug.Log(seedCountFromGrowthOverflow * seedCost);
-            Debug.Log(growthProgress);
             seedCountFromGrowthOverflow = Mathf.RoundToInt(seedCountFromGrowthOverflow * seedEfficiency);
             seedCount += seedCountFromGrowthOverflow;
 
@@ -285,20 +278,20 @@ public class Plant : MonoBehaviour
                 GameObject newObj = poolManager.GetSeed(new Vector3(transform.position.x, transform.position.y + Random.Range(0.0f, transform.position.y), transform.position.z), Quaternion.identity);
                 // kiedy bêd¹ branche to bêdziemy spawnowaæ z ró¿nych liœci
                 Seed newSeed = newObj.GetComponent<Seed>();
-                newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost * seedEfficiency);
+                newSeed.SetupVariables(newBaseNutrientConsumption, newGrowthSurplusThreshold, newHeightCeiling, newMetabolism, newSeedCost, seedCost);
             }
             // stworzyæ funkcjê mutateAndSpawn i pozbyæ siê ca³ego tego fora st¹d 
 
-            Invoke("SpawnSeed", seedInterval);
+            Invoke(nameof(SpawnSeed), seedInterval);
         }
     }
 
-    void turnDead() // zamienia siê w martw¹ roœlinê tera :OO
+    void TurnDead() // zamienia siê w martw¹ roœlinê tera :OO
     {
         deathTimer = height;
         ExtractSegments(false);
         isAlive = false;
-        Invoke("Decay", growthInterval * (height));
+        Invoke(nameof(Decay), growthInterval * (height));
         // zmieniamy material dla czytelnosci
         if (rend != null)
         {
@@ -311,7 +304,7 @@ public class Plant : MonoBehaviour
         deathTimer--;
         if (deathTimer > 0)
         {
-            Invoke("Decay", growthInterval * deathTimer);
+            Invoke(nameof(Decay), growthInterval * deathTimer);
             foreach (var segment in AccessedSegments)
             {
                 float amount = deathTimer * segment.Value.proximityFactor * decayMultplier; 

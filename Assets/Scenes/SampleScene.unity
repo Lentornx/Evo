@@ -178,8 +178,8 @@ Transform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 1727639603}
-  - {fileID: 1896240833}
   - {fileID: 2032847276}
+  - {fileID: 1896240833}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &705507993
@@ -632,7 +632,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b15ed852215053b4294635f02e42c92e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  replenishmentInterval: 10
+  replenishmentInterval: 5
 --- !u!1 &2045565232
 GameObject:
   m_ObjectHideFlags: 0

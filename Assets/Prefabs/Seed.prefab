@@ -121,12 +121,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   movementSpeed: 1
   plant: {fileID: 7805038903151981569, guid: d61d25ef64cd6294b8869ad86b777d8f, type: 3}
-  baseNutrientConsumption: 0.5
-  growthSurplusThreshold: 0.05
+  baseNutrientConsumption: 1
+  growthSurplusThreshold: 50
   heightCeiling: 20
   metabolism: 0.5
-  seedCost: 0.5
-  startingGrowth: 0.5
+  seedCost: 160
+  startingGrowth: 160
   plantsParent: {fileID: 0}
 --- !u!54 &4103742753222853345
 Rigidbody:

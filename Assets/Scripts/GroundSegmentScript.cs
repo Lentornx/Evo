@@ -39,21 +39,21 @@ public class GroundSegment : MonoBehaviour
 
     public float ExtractNutrients(Plant plant, float amount, float interval)
     {
-        float currentDemand = amount / interval;
+        float currentDemand = amount; // nie dzielimy przez interval bo chodzi o demand w danej chwii
         finalDemand -= Demand[plant];
-        Demand[plant] = currentDemand;
-        finalDemand += currentDemand;
+        Demand[plant] = currentDemand / interval; // tutaj dzielimy bo chodzi o demand per second
+        finalDemand += currentDemand / interval;
 
-        if(threshold < finalDemand)
+        if (threshold < finalDemand)
         {
-            amount = currentDemand / finalDemand * threshold;
+           amount = currentDemand / finalDemand * threshold;
         }
 
         amount = Mathf.Min(amount, nutrients);
         nutrients -= amount;
         if(dynamicMat == true)
             UpdateColor();
-
+        
         return amount;
     }
 

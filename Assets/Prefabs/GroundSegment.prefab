@@ -122,7 +122,7 @@ MonoBehaviour:
   nutrients: 25
   maxNutrients: 25
   replenishmentRate: 2.5
-  threshold: 0.5
+  threshold: 1
   decayMultiplier: 1
   finalDemand: 0
   fullMaterial: {fileID: 2100000, guid: d3461a578e8867442bad15c9f0a887bb, type: 2}

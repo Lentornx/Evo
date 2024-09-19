@@ -120,16 +120,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 666097c49b27d0c419e02bcb81cd125e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  range: 0.2
-  growthRate: 0.001
+  range: 0.15
+  growthRate: 1
   baseNutrientConsumption: 1
   adjustedNutrientConsumption: 0
-  growthProgress: 0.1
+  growthProgress: 100
   seedGrowth: 0
   seedGrowthRatio: 0.1
-  maintanenceBase: 0.005
-  seedCost: 0.1
-  seedEfficiency: 0.2
+  maintanenceBase: 5
+  seedCost: 100
+  seedEfficiency: 1
   finalGrowthThreshold: 0
   height: 1
   heightCeiling: 20

@@ -8,13 +8,13 @@ public class Plant : MonoBehaviour
 {
     public float range = 0.15f; // range of roots PER SIZE 
     private float finalRange;
-    public float growthRate = 0.001f;  // How much the plant grows per unit of nutrient extracted
+    public float growthRate = 0.5f;  // How much the plant grows per unit of nutrient extracted
     public float baseNutrientConsumption = 1.0f; // max nutrient extracted from one tile
     public float adjustedNutrientConsumption;
 
     public float growthProgress = 0.0f;  // Tracks progress towards the next growth step
-    private float growthThreshold = 0.1f; // how much growth needed to grow PER SIZE
-    private float growthSurplusThreshold = 0.05f; // plant will only grow when threshold is exceeded by this value PER SIZE
+    private float growthThreshold = 100f; // how much growth needed to grow PER SIZE
+    private float growthSurplusThreshold = 50f; // plant will only grow when threshold is exceeded by this value PER SIZE
     public float seedGrowth = 0;
     public float seedGrowthRatio = 0.1f; // jak¹ czêœæ seedGrowth dostaje z nutrientów
     public float maintanenceBase = 0.005f; // how much energy is spent PER SIZE per cycle
@@ -178,7 +178,7 @@ public class Plant : MonoBehaviour
 
             foreach (var segment in AccessedSegments)
             {
-                if (segment.Key.HasNutrients())
+                if (segment.Key.HasNutrients() && segment.Value.proximityFactor > 0)
                 {
                     totalNutrientConsumed += segment.Key.ExtractNutrients(this, adjustedNutrientConsumption * segment.Value.proximityFactor, consumeInterval);
                 }
@@ -241,7 +241,6 @@ public class Plant : MonoBehaviour
     {
         if (isAlive)
         {
-
             float newBaseNutrientConsumption = baseNutrientConsumption;
             float newGrowthSurplusThreshold = growthSurplusThreshold;
             int newHeightCeiling = heightCeiling;
@@ -251,6 +250,14 @@ public class Plant : MonoBehaviour
 
             int seedCount = (int)(seedGrowth / seedCost);
             seedGrowth -= seedCost * seedCount;
+            Debug.Log(growthProgress);
+            int seedCountFromGrowthOverflow = (int)((growthProgress - finalGrowthThreshold) / seedCost);
+            growthProgress -= seedCountFromGrowthOverflow * seedCost;
+            Debug.Log(seedCountFromGrowthOverflow * seedCost);
+            Debug.Log(growthProgress);
+            seedCountFromGrowthOverflow = Mathf.RoundToInt(seedCountFromGrowthOverflow * seedEfficiency);
+            seedCount += seedCountFromGrowthOverflow;
+
             for (int i = 0; i < seedCount; i++)
             {
                 float[] mutate = new float[] { Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f) };

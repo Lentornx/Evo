@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 
 public class GroundSegment : MonoBehaviour
@@ -8,61 +10,51 @@ public class GroundSegment : MonoBehaviour
     public float nutrients = 100.0f;
     public float maxNutrients = 100.0f;
     public float replenishmentRate = 1.0f;
-    public float replenishmentInterval = 4.0f;
-    public float threshold = 1.0f;
+    public float threshold = 3.0f;
+    public float decayMultiplier = 2.0f;
+    public float finalDemand = 0.0f;
 
+    private Dictionary<Plant, float> Demand = new Dictionary<Plant, float>();
+
+    public Material fullMaterial;
     private Renderer rend;
-    private Dictionary<Plant, float> extractingPlants = new Dictionary<Plant, float>(); //contains distance from this segment
+    public bool dynamicMat = false;
 
     void Start()
     {
         rend = GetComponent<Renderer>(); // renderuje nam zmienjacy sie kolor
-        UpdateColor();
-        InvokeRepeating("ReplenishNutrients", replenishmentInterval, replenishmentInterval);
     }
 
-    public void StartExtracting(Plant plant)
+    public void addToExtraction(Plant plant, float consumption)
     {
-        float distance = Vector3.Distance(new Vector3(transform.position.x,0,transform.position.z), 
-                                          new Vector3(plant.transform.position.x, 0, plant.transform.position.z)); 
-        // liczymy dystans od bazy rosliny (gdzie siê zaczynaj¹ korzenie)
-        extractingPlants.TryAdd(plant, distance);
+        Demand.TryAdd(plant, consumption);
+        finalDemand += consumption;
     }
 
-    public void StopExtracting(Plant plant)
+    public void RemoveFromExtraction(Plant plant)
     {
-        extractingPlants.Remove(plant);
+        finalDemand -= Demand[plant];
+        Demand.Remove(plant);
     }
 
-    public float ExtractNutrients(Plant plant, float amount) 
-        // idea, kazdy segment bedzie wiedzial w ilu procentach jest zakorzeniony wzglêdem kazdej rosliny, a inkrement zakorzenienia bêdzie zale¿a³ od statów i odleg³osci rosliny
+    public float ExtractNutrients(Plant plant, float amount, float interval)
     {
-        float nutrientsGiven = 0.0f;
-        float totalDemand = 0.0f; // how much total every plant wants from this segment
-        float currProximityFactor = Mathf.Clamp01(1.0f - (extractingPlants[plant] / (plant.range * plant.size)));
+        float currentDemand = amount; // nie dzielimy przez interval bo chodzi o demand w danej chwii
+        finalDemand -= Demand[plant];
+        Demand[plant] = currentDemand / interval; // tutaj dzielimy bo chodzi o demand per second
+        finalDemand += currentDemand / interval;
 
-        foreach (var p in extractingPlants)
+        if (threshold < finalDemand)
         {
-            float proximityFactor = Mathf.Clamp01(1.0f - (p.Value / (p.Key.range * p.Key.size))); // jezeli size sie nie zmieni to mozna zapisac w dictionary innym
-            totalDemand += p.Key.adjustedNutrientConsumption / p.Key.consumeInterval * proximityFactor; 
-            //mo¿liwe ¿e tutaj dajemy baseNutrientConsumption, by symulowaæ ¿e s¹ tam korzenie, a nie ile faktycznie pobieraj¹
+           amount = currentDemand / finalDemand * threshold;
         }
 
-        // If total demand exceeds a threshold, distribute proportionally based on proximity and extraction speed
-        if (totalDemand > threshold)
-        {
-            float proportion = (amount / plant.consumeInterval * currProximityFactor) / totalDemand;
-            nutrientsGiven = Mathf.Min(threshold * proportion, nutrients);
-        }
-        else
-        {
-            nutrientsGiven = Mathf.Min(amount * currProximityFactor, nutrients);
-        }
-
-        nutrients -= nutrientsGiven;
-        UpdateColor();
+        amount = Mathf.Min(amount, nutrients);
+        nutrients -= amount;
+        if(dynamicMat == true)
+            UpdateColor();
         
-        return nutrientsGiven;
+        return amount;
     }
 
     public bool HasNutrients()
@@ -73,24 +65,24 @@ public class GroundSegment : MonoBehaviour
     private void UpdateColor()
     {
         float nutrientRatio = nutrients / maxNutrients;
-        rend.material.color = Color.Lerp(Color.black, Color.green, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej szary kolor
+        rend.material.color = Color.Lerp(Color.black, fullMaterial.color, nutrientRatio); // im mniej nutrientow wzgledem maksymalnej ilosci tym bardziej czarny kolor 
     }
 
-    private void ReplenishNutrients()
+    public void ReplenishNutrients()
     {
         nutrients += replenishmentRate;
         if (nutrients > maxNutrients)
         {
             nutrients = maxNutrients;
         }
-        UpdateColor();
     }
 
-    public void GetNutrientsFromDecay(Plant p)
+    public void ReplenishNutrients(float amount)
     {
-        float distance = Vector3.Distance(new Vector3(transform.position.x, 0, transform.position.z),
-                                          new Vector3(p.transform.position.x, 0, p.transform.position.z)); // potencjalnie niewydajnie, mo¿naby zapisaæ na boku bo to sie stanie size razy
-        float proximityFactor = Mathf.Clamp01(1.0f - ( distance / (p.range * p.size)));
-        nutrients = Mathf.Min(maxNutrients, nutrients + (proximityFactor * p.size)/2.0f); //wspó³czynnik rozkladu do sparametryzowania
+        nutrients += amount;
+        if (nutrients > maxNutrients)
+        {
+            nutrients = maxNutrients;
+        }
     }
 }

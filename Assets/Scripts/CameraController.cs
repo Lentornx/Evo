@@ -4,8 +4,8 @@ public class CameraController : MonoBehaviour
 {
     public float moveSpeed = 5.0f;
     public float rotationSpeed = 4.0f;
-    public Vector3 minBounds = new Vector3(-10, 0, -10);
-    public Vector3 maxBounds = new Vector3(10, 10, 10);
+    public Vector3 minBounds = new Vector3(-100, 0, -100);
+    public Vector3 maxBounds = new Vector3(100, 100, 100);
 
     void Update()
     {
